@@ -130,12 +130,12 @@ flowchart LR
 
 ## Pruebas automatizadas
 
-`npm test` ejecuta **23 pruebas** con Vitest y Testing Library. Usan los **mismos handlers de MSW** del sitio, ejecutados en Node (`msw/node`). También corren en cada publicación: si alguna falla, el sitio no se publica.
+`npm test` ejecuta **24 pruebas** con Vitest y Testing Library. Usan los **mismos handlers de MSW** del sitio, ejecutados en Node (`msw/node`). También corren en cada publicación: si alguna falla, el sitio no se publica.
 
 | Archivo | Qué verifica |
 |---|---|
 | [api.test.js](src/test/api.test.js) | Respuestas de los 3 endpoints; errores 404 (sin reintentos), 500 (3 intentos), sin conexión, tiempo agotado y otros códigos; servidor inestable recuperado por el reintento; caché, peticiones compartidas y datos guardados ante fallas |
-| [App.test.jsx](src/test/App.test.jsx) | Indicador de carga que aparece y se retira; navegación inicio → categoría → libro; búsqueda y orden sin peticiones nuevas; páginas ya visitadas sin petición repetida; categoría vacía e inexistente; error 500 con reintento manual; datos guardados sin conexión; 404 de libro y de ruta |
+| [App.test.jsx](src/test/App.test.jsx) | Indicador de carga que aparece y se retira; navegación inicio → categoría → libro; búsqueda y orden sin peticiones nuevas; páginas ya visitadas sin petición repetida; categoría vacía e inexistente; error 500 con reintento manual que recupera también el menú de categorías; datos guardados sin conexión; 404 de libro y de ruta |
 
 ## Estructura
 

@@ -116,6 +116,20 @@ test("sin conexión con datos guardados vencidos: se muestran igual, con aviso y
   reloj.mockRestore();
 });
 
+test("error 500 en una categoría: Reintentar recupera los libros y también el menú de categorías", async () => {
+  cambiarEscenario("error500");
+  abrir("/categorias/ficcion");
+  const alerta = await screen.findByRole("alert");
+  // Las categorías también fallaron: el menú lateral queda sin enlaces
+  expect(within(screen.getByRole("navigation", { name: "Categorías" })).queryAllByRole("link")).toHaveLength(0);
+
+  cambiarEscenario("normal");
+  fireEvent.click(within(alerta).getByRole("button", { name: "Reintentar" }));
+  expect(await screen.findByRole("link", { name: /Rayuela/ })).toBeInTheDocument();
+  const menu = await screen.findByRole("navigation", { name: "Categorías" });
+  expect(await within(menu).findByRole("link", { name: "Fantasía" })).toBeInTheDocument();
+});
+
 test("libro inexistente (404) y ruta desconocida", async () => {
   const { unmount } = abrir("/libros/999");
   expect(await screen.findByRole("alert")).toHaveTextContent("No existe un libro con el código 999");

@@ -19,8 +19,16 @@ function Categoria() {
   const { slug } = useParams();
   const libros = useConsulta(consultas.librosDeCategoria(slug));
   // Las categorías ya se obtuvieron en el inicio: aquí salen de la caché, sin otra petición
-  const { datos: categorias } = useConsulta(consultas.categorias());
+  const { datos: categorias, error: errorCategorias, reintentar: reintentarCategorias } = useConsulta(
+    consultas.categorias()
+  );
   const [busqueda, setBusqueda] = useState("");
+
+  // Reintentar pide de nuevo los libros y, si también fallaron, las categorías del menú lateral
+  const reintentar = () => {
+    libros.reintentar();
+    if (errorCategorias) reintentarCategorias();
+  };
   const [orden, setOrden] = useState("titulo");
 
   // Búsqueda y orden se aplican sobre los datos ya recibidos: no generan peticiones nuevas
@@ -61,7 +69,7 @@ function Categoria() {
         {libros.cargando && <EstadoCarga texto="Cargando libros..." intento={libros.intento} />}
 
         {!libros.cargando && !libros.datos && libros.error && (
-          <MensajeError error={libros.error} onReintentar={libros.reintentar}>
+          <MensajeError error={libros.error} onReintentar={reintentar}>
             <Boton variante="secundario" to="/">
               Ver todas las categorías
             </Boton>
@@ -70,7 +78,7 @@ function Categoria() {
 
         {libros.datos && (
           <>
-            {libros.error && <AvisoDatosGuardados error={libros.error} onReintentar={libros.reintentar} />}
+            {libros.error && <AvisoDatosGuardados error={libros.error} onReintentar={reintentar} />}
             <p className="mb-4 text-gray-600">{libros.datos.categoria.descripcion}</p>
 
             {libros.datos.libros.length === 0 ? (
