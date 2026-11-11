@@ -130,6 +130,37 @@ test("error 500 en una categoría: Reintentar recupera los libros y también el 
   expect(await within(menu).findByRole("link", { name: "Fantasía" })).toBeInTheDocument();
 });
 
+test("la búsqueda y el orden se conservan al volver desde el detalle de un libro", async () => {
+  abrir("/categorias/ciencia-ficcion");
+  await screen.findByRole("link", { name: /Dune/ });
+  fireEvent.change(screen.getByLabelText("Buscar por título o autor"), { target: { value: "bradbury" } });
+  fireEvent.change(screen.getByLabelText("Ordenar libros"), { target: { value: "precio-desc" } });
+
+  fireEvent.click(screen.getByRole("link", { name: /Crónicas marcianas/ }));
+  await screen.findByRole("heading", { name: "Crónicas marcianas", level: 2 });
+  fireEvent.click(screen.getByRole("link", { name: "Ciencia Ficción" }));
+
+  expect(await screen.findByLabelText("Buscar por título o autor")).toHaveValue("bradbury");
+  expect(screen.getByLabelText("Ordenar libros")).toHaveValue("precio-desc");
+  expect(screen.getByText("Mostrando 2 de 5 libros")).toBeInTheDocument();
+});
+
+test("si el navegador no permite guardar datos, se avisa y el sitio sigue funcionando", async () => {
+  const bloqueo = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+    throw new Error("QuotaExceededError");
+  });
+  abrir("/");
+  expect(await screen.findByRole("link", { name: /Ciencia Ficción/ })).toBeInTheDocument();
+  expect(screen.getByText("Tu navegador no permite guardar datos de este sitio.")).toBeInTheDocument();
+  bloqueo.mockRestore();
+});
+
+test("con almacenamiento disponible no se muestra el aviso", async () => {
+  abrir("/");
+  await screen.findByRole("link", { name: /Ciencia Ficción/ });
+  expect(screen.queryByText("Tu navegador no permite guardar datos de este sitio.")).not.toBeInTheDocument();
+});
+
 test("libro inexistente (404) y ruta desconocida", async () => {
   const { unmount } = abrir("/libros/999");
   expect(await screen.findByRole("alert")).toHaveTextContent("No existe un libro con el código 999");

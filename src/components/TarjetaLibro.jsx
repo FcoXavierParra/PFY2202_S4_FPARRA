@@ -4,13 +4,15 @@ import { consultas, precargar } from "../api/libreria";
 import { formatoPrecio } from "../utils/formato";
 import PortadaLibro from "./PortadaLibro";
 
-// Libro dentro del listado de una categoría. Al pasar el mouse se precarga su detalle
-function TarjetaLibro({ libro }) {
+// Libro dentro del listado de una categoría. Al pasar el mouse se precarga su detalle.
+// "desde" lleva al detalle la búsqueda y el orden activos, para restaurarlos al volver.
+function TarjetaLibro({ libro, desde = "" }) {
   const alAnticipar = () => precargar(consultas.libro(libro.id));
 
   return (
     <Link
       to={`/libros/${libro.id}`}
+      state={{ desde }}
       onMouseEnter={alAnticipar}
       onFocus={alAnticipar}
       className="tarjeta flex gap-4 transition-shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-marca"

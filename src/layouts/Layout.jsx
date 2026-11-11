@@ -1,6 +1,7 @@
 import React, { Suspense } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router";
 import PanelPruebas from "../components/PanelPruebas";
+import AvisoAlmacenamiento from "../components/AvisoAlmacenamiento";
 
 // Estructura común: cabecera con menú, contenido de la ruta actual (<Outlet />) y panel de pruebas
 function Layout() {
@@ -31,6 +32,7 @@ function Layout() {
       </header>
 
       <main className="mx-auto max-w-5xl px-4 py-6">
+        <AvisoAlmacenamiento />
         {/* Las páginas se cargan bajo demanda (React.lazy): mientras llegan se muestra este aviso */}
         <Suspense fallback={<p className="py-10 text-center text-gray-500">Cargando...</p>}>
           <Outlet />

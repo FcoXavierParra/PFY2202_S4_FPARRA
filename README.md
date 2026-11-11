@@ -55,6 +55,7 @@ El cliente HTTP ([src/api/cliente.js](src/api/cliente.js)) convierte cada falla 
 | **Sin conexión** | *Sin conexión con el servidor. Revisa tu conexión…* | Reintento automático, botón **Reintentar** y **datos guardados** si existen |
 | **Tiempo agotado** (más de 8 s) | *El servidor está tardando demasiado* | Reintento automático y botón **Reintentar** |
 | Falla con **datos guardados** | Aviso: *te mostramos la última información guardada* | La página sigue usable, con **Reintentar** en el aviso |
+| Navegador que **no permite guardar datos** | Aviso: *tu navegador no permite guardar datos de este sitio* | El sitio sigue funcionando; se explica qué se pierde (copia guardada al recargar o sin conexión) |
 | Categoría **vacía** | *Aún no hay libros en esta categoría* | Botón **Explorar otras categorías** |
 
 | Reintento automático en curso | Error 500 tras los reintentos | Sin conexión: datos guardados |
@@ -85,7 +86,7 @@ La caché ([src/api/cache.js](src/api/cache.js)) evita peticiones repetidas o in
 | **Reutilización por 5 minutos** | Volver a una página ya visitada no genera una petición nueva |
 | **Peticiones compartidas** | Si dos componentes piden lo mismo a la vez, se hace una sola petición |
 | **Datos compartidos entre vistas** | El menú lateral de categorías reutiliza la respuesta del inicio, sin otra petición |
-| **Búsqueda y orden locales** | Filtrar por título o autor y ordenar por precio o año se hace sobre los datos ya recibidos |
+| **Búsqueda y orden locales** | Filtrar por título o autor y ordenar por precio o año se hace sobre los datos ya recibidos. Ambos quedan en la URL (`?q=...&orden=...`) y se conservan al volver desde el detalle de un libro |
 | **Carga solo de lo necesario** | El listado no trae la sinopsis; se pide solo al abrir el detalle |
 | **Precarga por intención** | Al pasar el mouse o enfocar una categoría o un libro, sus datos se piden por adelantado y la página abre al instante |
 | **Respuestas obsoletas descartadas** | Si el usuario cambia de categoría antes de que llegue la respuesta anterior, esa respuesta se ignora |
@@ -130,12 +131,24 @@ flowchart LR
 
 ## Pruebas automatizadas
 
-`npm test` ejecuta **24 pruebas** con Vitest y Testing Library. Usan los **mismos handlers de MSW** del sitio, ejecutados en Node (`msw/node`). También corren en cada publicación: si alguna falla, el sitio no se publica.
+`npm test` ejecuta **27 pruebas** con Vitest y Testing Library. Usan los **mismos handlers de MSW** del sitio, ejecutados en Node (`msw/node`). También corren en cada publicación: si alguna falla, el sitio no se publica.
 
 | Archivo | Qué verifica |
 |---|---|
 | [api.test.js](src/test/api.test.js) | Respuestas de los 3 endpoints; errores 404 (sin reintentos), 500 (3 intentos), sin conexión, tiempo agotado y otros códigos; servidor inestable recuperado por el reintento; caché, peticiones compartidas y datos guardados ante fallas |
-| [App.test.jsx](src/test/App.test.jsx) | Indicador de carga que aparece y se retira; navegación inicio → categoría → libro; búsqueda y orden sin peticiones nuevas; páginas ya visitadas sin petición repetida; categoría vacía e inexistente; error 500 con reintento manual que recupera también el menú de categorías; datos guardados sin conexión; 404 de libro y de ruta |
+| [App.test.jsx](src/test/App.test.jsx) | Indicador de carga que aparece y se retira; navegación inicio → categoría → libro; búsqueda y orden sin peticiones nuevas; páginas ya visitadas sin petición repetida; categoría vacía e inexistente; error 500 con reintento manual que recupera también el menú de categorías; datos guardados sin conexión; búsqueda y orden conservados al volver del detalle; aviso cuando el navegador no permite guardar datos; 404 de libro y de ruta |
+
+## Retroalimentación de la sumativa 1 (S3) aplicada
+
+La sumativa 1 obtuvo logro completo en todos los criterios. Sus oportunidades de mejora se aplicaron aquí donde corresponden al nuevo caso:
+
+| Observación del docente | Cambio en esta entrega |
+|---|---|
+| Informar si el navegador no permite guardar en `localStorage` | La caché detecta si puede guardar ([src/api/cache.js](src/api/cache.js)) y, si no, se muestra un aviso ([AvisoAlmacenamiento](src/components/AvisoAlmacenamiento.jsx)). El sitio sigue funcionando en memoria. |
+| Conservar la búsqueda al volver desde el detalle | La búsqueda y el orden de la categoría quedan en la URL y el enlace de regreso del detalle los restaura. |
+| Avisar al eliminar un artículo que está en el carrito | No aplica: la librería no tiene carrito ni eliminación de artículos. |
+
+La retroalimentación de la formativa 2 (migración a Vite, `react-router` 7, validación de datos persistidos) ya forma parte de la base del proyecto.
 
 ## Estructura
 

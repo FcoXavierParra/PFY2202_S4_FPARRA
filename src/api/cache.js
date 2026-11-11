@@ -11,7 +11,24 @@ const CLAVE_STORAGE = "libreria-cache-api";
 let entradas = cargarGuardadas(); // clave -> { datos, guardadoEn }
 const enCurso = new Map(); // clave -> promesa de la petición en curso
 let estadisticas = { peticiones: 0, desdeCache: 0, compartidas: 0 };
+let puedeGuardar = probarAlmacenamiento();
 const suscriptores = new Set();
+
+const avisarCambios = () => suscriptores.forEach((avisar) => avisar());
+
+// Algunos navegadores bloquean localStorage (modo privado estricto, cookies desactivadas).
+// La aplicación sigue funcionando, pero la interfaz avisa que los datos no se conservarán.
+function probarAlmacenamiento() {
+  try {
+    localStorage.setItem("libreria-prueba", "1");
+    localStorage.removeItem("libreria-prueba");
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export const almacenamientoDisponible = () => puedeGuardar;
 
 // Lo guardado en una visita anterior se muestra al instante, pero se marca como vencido
 // para pedir una versión actualizada en segundo plano
@@ -28,13 +45,17 @@ function guardar() {
   try {
     localStorage.setItem(CLAVE_STORAGE, JSON.stringify(Object.fromEntries(entradas)));
   } catch {
-    // Sin almacenamiento la caché funciona solo en memoria
+    // Sin almacenamiento la caché funciona solo en memoria; se informa una vez a la interfaz
+    if (puedeGuardar) {
+      puedeGuardar = false;
+      avisarCambios();
+    }
   }
 }
 
 function contar(campo) {
   estadisticas = { ...estadisticas, [campo]: estadisticas[campo] + 1 };
-  suscriptores.forEach((avisar) => avisar());
+  avisarCambios();
 }
 
 // Devuelve { datos, fresco } o null. Una entrada vencida igual se devuelve (fresco: false)
@@ -71,11 +92,12 @@ export function consultar(clave, pedir, { forzar = false, alReintentar } = {}) {
 export function vaciarCache() {
   entradas = new Map();
   guardar();
-  suscriptores.forEach((avisar) => avisar());
+  avisarCambios();
 }
 
 export const obtenerEstadisticas = () => estadisticas;
 
+// Suscripción a los cambios de contadores y de disponibilidad del almacenamiento
 export function suscribirEstadisticas(avisar) {
   suscriptores.add(avisar);
   return () => suscriptores.delete(avisar);
@@ -86,5 +108,6 @@ export function reiniciarCache() {
   entradas = new Map();
   enCurso.clear();
   estadisticas = { peticiones: 0, desdeCache: 0, compartidas: 0 };
+  puedeGuardar = probarAlmacenamiento();
   guardar();
 }

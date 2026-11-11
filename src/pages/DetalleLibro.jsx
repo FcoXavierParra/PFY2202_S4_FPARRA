@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useParams } from "react-router";
+import { Link, useLocation, useParams } from "react-router";
 import { consultas } from "../api/libreria";
 import { useConsulta } from "../hooks/useConsulta";
 import { formatoPrecio } from "../utils/formato";
@@ -11,6 +11,8 @@ import Boton from "../components/ui/Boton";
 // Detalle de un libro: GET /api/libros/:id (incluye la sinopsis, que el listado no trae)
 function DetalleLibro() {
   const { id } = useParams();
+  // Búsqueda y orden que tenía la categoría al abrir este libro: "volver" los restaura
+  const desde = useLocation().state?.desde ?? "";
   const { datos: libro, cargando, actualizando, intento, error, reintentar } = useConsulta(consultas.libro(id));
 
   if (cargando) return <EstadoCarga texto="Cargando libro..." intento={intento} bloques={4} forma="lineas" />;
@@ -39,7 +41,7 @@ function DetalleLibro() {
           Inicio
         </Link>{" "}
         ›{" "}
-        <Link to={`/categorias/${libro.categoria}`} className="hover:text-marca hover:underline">
+        <Link to={`/categorias/${libro.categoria}${desde}`} className="hover:text-marca hover:underline">
           {libro.categoriaNombre}
         </Link>{" "}
         › <span className="text-gray-700">{libro.titulo}</span>

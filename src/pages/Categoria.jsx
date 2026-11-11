@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from "react";
-import { NavLink, useParams } from "react-router";
+import React, { useMemo } from "react";
+import { NavLink, useParams, useSearchParams } from "react-router";
 import { consultas } from "../api/libreria";
 import { useConsulta } from "../hooks/useConsulta";
 import EstadoCarga from "../components/EstadoCarga";
@@ -22,14 +22,25 @@ function Categoria() {
   const { datos: categorias, error: errorCategorias, reintentar: reintentarCategorias } = useConsulta(
     consultas.categorias()
   );
-  const [busqueda, setBusqueda] = useState("");
+  // Búsqueda y orden viven en la URL (?q=...&orden=...): se conservan al volver desde el detalle
+  // de un libro y se reinician al cambiar de categoría
+  const [parametros, setParametros] = useSearchParams();
+  const busqueda = parametros.get("q") ?? "";
+  const orden = parametros.get("orden") in ORDENES ? parametros.get("orden") : "titulo";
+  const actualizarParametro = (nombre, valor, porDefecto) => {
+    const nuevos = new URLSearchParams(parametros);
+    if (valor && valor !== porDefecto) nuevos.set(nombre, valor);
+    else nuevos.delete(nombre);
+    setParametros(nuevos, { replace: true }); // replace: escribir no llena el historial del navegador
+  };
+  const setBusqueda = (valor) => actualizarParametro("q", valor, "");
+  const setOrden = (valor) => actualizarParametro("orden", valor, "titulo");
 
   // Reintentar pide de nuevo los libros y, si también fallaron, las categorías del menú lateral
   const reintentar = () => {
     libros.reintentar();
     if (errorCategorias) reintentarCategorias();
   };
-  const [orden, setOrden] = useState("titulo");
 
   // Búsqueda y orden se aplican sobre los datos ya recibidos: no generan peticiones nuevas
   const visibles = useMemo(() => {
@@ -117,7 +128,7 @@ function Categoria() {
                 ) : (
                   <div className="grid gap-4 sm:grid-cols-2">
                     {visibles.map((libro) => (
-                      <TarjetaLibro key={libro.id} libro={libro} />
+                      <TarjetaLibro key={libro.id} libro={libro} desde={parametros.toString() ? `?${parametros}` : ""} />
                     ))}
                   </div>
                 )}
